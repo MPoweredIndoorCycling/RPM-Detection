@@ -1,23 +1,19 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RPM Detection</title>
-</head>
-<body>
-    <h1>RPM Detection App</h1>
-    <p>Click the button to start detecting the BPM and RPM from music!</p>
-    <button id="startButton">Start Listening</button>
+<script>
+    const bpmDisplay = document.getElementById('bpmDisplay');
+    const rpmDisplay = document.getElementById('rpmDisplay');
+    const startButton = document.getElementById('startButton');
 
-    <h2>BPM: <span id="bpmDisplay">--</span></h2>
-    <h2>RPM: <span id="rpmDisplay">--</span></h2>
+    startButton.addEventListener('click', function() {
+        // Request access to the microphone
+        navigator.mediaDevices.getUserMedia({ audio: true })
+            .then(stream => {
+                // Create an audio context
+                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                const source = audioContext.createMediaStreamSource(stream);
+                const analyser = audioContext.createAnalyser();
 
-    <script>
-        // JavaScript for future BPM detection will go here
-        document.getElementById('startButton').addEventListener('click', function() {
-            alert('Listening will start here!');
-        });
-    </script>
-</body>
-</html>
+                // Connect the audio input stream to the analyser
+                source.connect(analyser);
+
+                // Feedback to user
+                alert('Microphone access granted! Listening fo
