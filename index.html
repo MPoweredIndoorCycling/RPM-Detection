@@ -1,65 +1,72 @@
 <script>
-    const bpmDisplay = document.getElementById('bpmDisplay');
-    const rpmDisplay = document.getElementById('rpmDisplay');
-    const startButton = document.getElementById('startButton');
-    let audioContext, analyser, dataArray;
+    window.onload = function() {
+        const bpmDisplay = document.getElementById('bpmDisplay');
+        const rpmDisplay = document.getElementById('rpmDisplay');
+        const startButton = document.getElementById('startButton');
+        let audioContext, analyser, dataArray;
 
-    // Variables to detect beats
-    let previousTime = 0;
-    let beatTimestamps = [];
+        // Variables to detect beats
+        let previousTime = 0;
+        let beatTimestamps = [];
 
-    startButton.addEventListener('click', function() {
-        // Request access to the microphone
-        navigator.mediaDevices.getUserMedia({ audio: true })
-            .then(stream => {
-                // Create an audio context
-                audioContext = new (window.AudioContext || window.webkitAudioContext)();
-                const source = audioContext.createMediaStreamSource(stream);
-                analyser = audioContext.createAnalyser();
+        startButton.addEventListener('click', function() {
+            // Request access to the microphone
+            navigator.mediaDevices.getUserMedia({ audio: true })
+                .then(stream => {
+                    // Create an audio context
+                    audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                    const source = audioContext.createMediaStreamSource(stream);
+                    analyser = audioContext.createAnalyser();
 
-                // Set up analyser properties
-                analyser.fftSize = 2048;
-                const bufferLength = analyser.frequencyBinCount;
-                dataArray = new Uint8Array(bufferLength);
+                    // Set up analyser properties
+                    analyser.fftSize = 2048;
+                    const bufferLength = analyser.frequencyBinCount;
+                    dataArray = new Uint8Array(bufferLength);
 
-                // Connect the audio input stream to the analyser
-                source.connect(analyser);
+                    // Connect the audio input stream to the analyser
+                    source.connect(analyser);
 
-                // Feedback to user
-                startButton.textContent = "Listening...";
-                
-                // Start analyzing the audio stream
-                analyzeAudio();
-            })
-            .catch(err => {
-                console.error('Error accessing microphone: ', err);
-                alert('Microphone access denied. Please allow access to continue.');
-            });
-    });
+                    // Feedback to user
+                    startButton.textContent = "Listening...";
+                    
+                    // Start analyzing the audio stream
+                    analyzeAudio();
+                })
+                .catch(err => {
+                    console.error('Error accessing microphone: ', err);
+                    alert('Microphone access denied. Please allow access to continue.');
+                });
+        });
 
-    function analyzeAudio() {
-        requestAnimationFrame(analyzeAudio);
-        analyser.getByteTimeDomainData(dataArray);
+        function analyzeAudio() {
+            try {
+                requestAnimationFrame(analyzeAudio);
+                analyser.getByteTimeDomainData(dataArray);
 
-        // Simple beat detection by checking amplitude peaks
-        let currentTime = audioContext.currentTime;
-        let amplitude = Math.max(...dataArray);  // Get the maximum amplitude in the current frame
+                // Simple beat detection by checking amplitude peaks
+                let currentTime = audioContext.currentTime;
+                let amplitude = Math.max(...dataArray);  // Get the maximum amplitude in the current frame
 
-        if (amplitude > 128) {  // Simple threshold to detect a "beat"
-            if (currentTime - previousTime > 0.3) {  // Prevent detecting too many beats in a short time
-                beatTimestamps.push(currentTime);
-                previousTime = currentTime;
-            }
+                if (amplitude > 128) {  // Simple threshold to detect a "beat"
+                    if (currentTime - previousTime > 0.3) {  // Prevent detecting too many beats in a short time
+                        beatTimestamps.push(currentTime);
+                        previousTime = currentTime;
+                    }
 
-            // Calculate BPM based on the time between beats
-            if (beatTimestamps.length > 1) {
-                const beatIntervals = beatTimestamps.slice(-5).map((t, i, arr) => t - (arr[i - 1] || t));
-                const avgInterval = beatIntervals.reduce((sum, val) => sum + val, 0) / beatIntervals.length;
-                const bpm = 60 / avgInterval;
-                const rpm = bpm / 2;
+                    // Calculate BPM based on the time between beats
+                    if (beatTimestamps.length > 1) {
+                        const beatIntervals = beatTimestamps.slice(-5).map((t, i, arr) => t - (arr[i - 1] || t));
+                        const avgInterval = beatIntervals.reduce((sum, val) => sum + val, 0) / beatIntervals.length;
+                        const bpm = 60 / avgInterval;
+                        const rpm = bpm / 2;
 
-                bpmDisplay.textContent = Math.round(bpm);
-                rpmDisplay.textContent = rpm.toFixed(1);
+                        bpmDisplay.textContent = Math.round(bpm);
+                        rpmDisplay.textContent = rpm.toFixed(1);
+                    }
+                }
+            } catch (error) {
+                console.error('Error during audio analysis:', error);
+                alert('An error occurred during audio processing. Please try again.');
             }
         }
     }
