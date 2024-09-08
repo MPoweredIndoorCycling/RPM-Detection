@@ -10,19 +10,32 @@
     <p>Click the button to start detecting the BPM and RPM from music!</p>
     <button id="startButton">Start Listening</button>
 
-    <h2>BPM: <span id="bpmDisplay">--</span></h2>
-    <h2>RPM: <span id="rpmDisplay">--</span></h2>
+    <h2>Audio Level: <span id="audioLevel">--</span></h2>
 
-    <!-- Move the script block here, at the end of the body -->
+    <!-- Script at the end of body -->
     <script>
         const startButton = document.getElementById('startButton');
-        const bpmDisplay = document.getElementById('bpmDisplay');
-        const rpmDisplay = document.getElementById('rpmDisplay');
+        const audioLevelDisplay = document.getElementById('audioLevel');
+        let audioContext, analyser, dataArray;
 
         startButton.addEventListener('click', function() {
             navigator.mediaDevices.getUserMedia({ audio: true })
                 .then(stream => {
-                    alert('Microphone access granted! Listening for beats...');
+                    // Create audio context and analyser
+                    audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                    const source = audioContext.createMediaStreamSource(stream);
+                    analyser = audioContext.createAnalyser();
+
+                    // Set analyser properties
+                    analyser.fftSize = 2048;
+                    const bufferLength = analyser.frequencyBinCount;
+                    dataArray = new Uint8Array(bufferLength);
+
+                    // Connect source to analyser
+                    source.connect(analyser);
+
+                    // Start analyzing the audio stream
+                    visualizeAudio();
                     startButton.textContent = "Listening...";
                 })
                 .catch(err => {
@@ -30,6 +43,15 @@
                     alert('Microphone access denied.');
                 });
         });
+
+        function visualizeAudio() {
+            requestAnimationFrame(visualizeAudio);
+            analyser.getByteTimeDomainData(dataArray);
+
+            // Calculate the amplitude of the audio signal
+            let amplitude = Math.max(...dataArray);
+            audioLevelDisplay.textContent = amplitude;
+        }
     </script>
 </body>
 </html>
