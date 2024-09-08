@@ -3,27 +3,36 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RPM Detection v1.1</title>
+    <title>RPM Detection v1.2</title>
 </head>
 <body>
-    <h1>RPM Detection App - Version 1.1</h1>
+    <h1>RPM Detection App - Version 1.2</h1>
     <p>Click the button to start detecting the BPM and RPM from music!</p>
     <button id="startButton">Start Listening</button>
 
     <h2>Audio Level: <span id="audioLevel">--</span></h2>
     <h2>BPM: <span id="bpmDisplay">--</span></h2>
     <h2>RPM: <span id="rpmDisplay">--</span></h2>
+    <h2>Time Left: <span id="timeLeft">--</span> seconds</h2>
+    <p id="noResultMessage" style="display: none;">No results were returned.</p>
 
     <script>
-        const version = "1.1";  // Adding version number
+        const version = "1.2";  // Adding version number
         const startButton = document.getElementById('startButton');
         const audioLevelDisplay = document.getElementById('audioLevel');
         const bpmDisplay = document.getElementById('bpmDisplay');
         const rpmDisplay = document.getElementById('rpmDisplay');
+        const timeLeftDisplay = document.getElementById('timeLeft');
+        const noResultMessage = document.getElementById('noResultMessage');
         let audioContext, analyser, dataArray, previousTime = 0, beatTimestamps = [], smoothedAmplitude = 0;
         let threshold = 130;  // Fine-tuned threshold for beat detection
+        let timeLimit = 15;  // 15-second time limit for detection
+        let timeRemaining;
+        let beatDetected = false;
 
         startButton.addEventListener('click', function() {
+            resetUI();
+            timeRemaining = timeLimit;
             navigator.mediaDevices.getUserMedia({ audio: true })
                 .then(stream => {
                     audioContext = new (window.AudioContext || window.webkitAudioContext)();
@@ -34,6 +43,7 @@
                     dataArray = new Uint8Array(bufferLength);
                     source.connect(analyser);
                     visualizeAudio();
+                    countdownTimer();
                     startButton.textContent = "Listening...";
                 })
                 .catch(err => {
@@ -42,7 +52,17 @@
                 });
         });
 
+        function resetUI() {
+            bpmDisplay.textContent = "--";
+            rpmDisplay.textContent = "--";
+            timeLeftDisplay.textContent = timeLimit;
+            noResultMessage.style.display = "none";
+            beatTimestamps = [];
+            beatDetected = false;
+        }
+
         function visualizeAudio() {
+            if (timeRemaining <= 0) return;  // Stop processing if time runs out
             requestAnimationFrame(visualizeAudio);
             analyser.getByteTimeDomainData(dataArray);
 
@@ -51,17 +71,18 @@
             smoothedAmplitude = smoothedAmplitude * 0.9 + amplitude * 0.1;  // Smoothing the signal
             audioLevelDisplay.textContent = Math.round(smoothedAmplitude);  // Round the audio level for display
 
-            // Fine-tuned beat detection based on threshold
+            // Beat detection based on threshold
             let currentTime = audioContext.currentTime;
             if (smoothedAmplitude > threshold) {  // Beat detected when amplitude exceeds threshold
                 if (currentTime - previousTime > 0.3) {  // Avoid detecting beats too close together
                     beatTimestamps.push(currentTime);
                     previousTime = currentTime;
+                    beatDetected = true;
                 }
 
                 // Calculate BPM based on time between beats
                 if (beatTimestamps.length > 1) {
-                    const intervals = beatTtimestamps.slice(-5).map((t, i, arr) => t - (arr[i - 1] || t));
+                    const intervals = beatTimestamps.slice(-5).map((t, i, arr) => t - (arr[i - 1] || t));
                     const avgInterval = intervals.reduce((sum, val) => sum + val, 0) / intervals.length;
                     const bpm = 60 / avgInterval;
                     const rpm = bpm / 2;
@@ -69,6 +90,22 @@
                     bpmDisplay.textContent = Math.round(bpm);
                     rpmDisplay.textContent = rpm.toFixed(1);
                 }
+            }
+        }
+
+        function countdownTimer() {
+            if (timeRemaining > 0) {
+                setTimeout(() => {
+                    timeRemaining--;
+                    timeLeftDisplay.textContent = timeRemaining;
+                    countdownTimer();
+                }, 1000);
+            } else {
+                // Time is up, check if a beat was detected
+                if (!beatDetected) {
+                    noResultMessage.style.display = "block";
+                }
+                startButton.textContent = "Start Listening";
             }
         }
     </script>
