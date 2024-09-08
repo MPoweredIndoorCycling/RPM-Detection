@@ -3,10 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RPM Detection</title>
+    <title>RPM Detection v1.1</title>
 </head>
 <body>
-    <h1>RPM Detection App</h1>
+    <h1>RPM Detection App - Version 1.1</h1>
     <p>Click the button to start detecting the BPM and RPM from music!</p>
     <button id="startButton">Start Listening</button>
 
@@ -15,12 +15,13 @@
     <h2>RPM: <span id="rpmDisplay">--</span></h2>
 
     <script>
+        const version = "1.1";  // Adding version number
         const startButton = document.getElementById('startButton');
         const audioLevelDisplay = document.getElementById('audioLevel');
         const bpmDisplay = document.getElementById('bpmDisplay');
         const rpmDisplay = document.getElementById('rpmDisplay');
         let audioContext, analyser, dataArray, previousTime = 0, beatTimestamps = [], smoothedAmplitude = 0;
-        let threshold = 150;  // Simplified fixed threshold for beat detection
+        let threshold = 130;  // Fine-tuned threshold for beat detection
 
         startButton.addEventListener('click', function() {
             navigator.mediaDevices.getUserMedia({ audio: true })
@@ -50,17 +51,17 @@
             smoothedAmplitude = smoothedAmplitude * 0.9 + amplitude * 0.1;  // Smoothing the signal
             audioLevelDisplay.textContent = Math.round(smoothedAmplitude);  // Round the audio level for display
 
-            // Beat detection based on fixed threshold
+            // Fine-tuned beat detection based on threshold
             let currentTime = audioContext.currentTime;
             if (smoothedAmplitude > threshold) {  // Beat detected when amplitude exceeds threshold
-                if (currentTime - previousTime > 0.3) {  // Prevent detecting too many beats close together
+                if (currentTime - previousTime > 0.3) {  // Avoid detecting beats too close together
                     beatTimestamps.push(currentTime);
                     previousTime = currentTime;
                 }
 
                 // Calculate BPM based on time between beats
                 if (beatTimestamps.length > 1) {
-                    const intervals = beatTimestamps.slice(-5).map((t, i, arr) => t - (arr[i - 1] || t));
+                    const intervals = beatTtimestamps.slice(-5).map((t, i, arr) => t - (arr[i - 1] || t));
                     const avgInterval = intervals.reduce((sum, val) => sum + val, 0) / intervals.length;
                     const bpm = 60 / avgInterval;
                     const rpm = bpm / 2;
