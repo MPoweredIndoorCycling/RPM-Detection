@@ -1,48 +1,65 @@
-<script>
-    const bpmDisplay = document.getElementById('bpmDisplay');
-    const rpmDisplay = document.getElementById('rpmDisplay');
-    const startButton = document.getElementById('startButton');
-    let audioContext, analyser, dataArray;
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RPM Detection</title>
+</head>
+<body>
+    <h1>RPM Detection App</h1>
+    <p>Click the button to start detecting the BPM and RPM from music!</p>
+    <button id="startButton">Start Listening</button>
 
-    startButton.addEventListener('click', function() {
-        // Request access to the microphone
-        navigator.mediaDevices.getUserMedia({ audio: true })
-            .then(stream => {
-                // Create an audio context
-                audioContext = new (window.AudioContext || window.webkitAudioContext)();
-                const source = audioContext.createMediaStreamSource(stream);
-                analyser = audioContext.createAnalyser();
+    <h2>BPM: <span id="bpmDisplay">--</span></h2>
+    <h2>RPM: <span id="rpmDisplay">--</span></h2>
 
-                // Set up analyser properties
-                analyser.fftSize = 2048;
-                const bufferLength = analyser.frequencyBinCount;
-                dataArray = new Uint8Array(bufferLength);
+    <script>
+        const bpmDisplay = document.getElementById('bpmDisplay');
+        const rpmDisplay = document.getElementById('rpmDisplay');
+        const startButton = document.getElementById('startButton');
+        let audioContext, analyser, dataArray;
 
-                // Connect the audio input stream to the analyser
-                source.connect(analyser);
+        startButton.addEventListener('click', function() {
+            // Request access to the microphone
+            navigator.mediaDevices.getUserMedia({ audio: true })
+                .then(stream => {
+                    // Create an audio context
+                    audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                    const source = audioContext.createMediaStreamSource(stream);
+                    analyser = audioContext.createAnalyser();
 
-                // Feedback to user
-                alert('Microphone access granted! Listening for beats...');
-                startButton.textContent = "Listening...";
-                
-                // Start analyzing the audio stream
-                analyzeAudio();
-            })
-            .catch(err => {
-                console.error('Error accessing microphone: ', err);
-                alert('Microphone access denied. Please allow access to continue.');
-            });
-    });
+                    // Set up analyser properties
+                    analyser.fftSize = 2048;
+                    const bufferLength = analyser.frequencyBinCount;
+                    dataArray = new Uint8Array(bufferLength);
 
-    function analyzeAudio() {
-        requestAnimationFrame(analyzeAudio);
-        analyser.getByteTimeDomainData(dataArray);
+                    // Connect the audio input stream to the analyser
+                    source.connect(analyser);
 
-        // Placeholder for beat detection logic
-        // For now, we'll just show random BPM and RPM values as a demo
-        let bpm = Math.floor(Math.random() * 120) + 60;  // Random BPM between 60 and 180
-        let rpm = bpm / 2;
-        bpmDisplay.textContent = bpm;
-        rpmDisplay.textContent = rpm.toFixed(1);
-    }
-</script>
+                    // Feedback to user
+                    alert('Microphone access granted! Listening for beats...');
+                    startButton.textContent = "Listening...";
+                    
+                    // Start analyzing the audio stream
+                    analyzeAudio();
+                })
+                .catch(err => {
+                    console.error('Error accessing microphone: ', err);
+                    alert('Microphone access denied. Please allow access to continue.');
+                });
+        });
+
+        function analyzeAudio() {
+            requestAnimationFrame(analyzeAudio);
+            analyser.getByteTimeDomainData(dataArray);
+
+            // For now, we generate random values to simulate beat detection
+            const bpm = Math.floor(Math.random() * 120) + 60;  // Random BPM between 60 and 180
+            const rpm = bpm / 2;
+
+            bpmDisplay.textContent = bpm;
+            rpmDisplay.textContent = rpm.toFixed(1);
+        }
+    </script>
+</body>
+</html>
