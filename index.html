@@ -6,7 +6,18 @@
     <title>RPM Detection</title>
 </head>
 <body>
-    <h1>Welcome to the RPM Detection App</h1>
-    <p>This is a placeholder for the future RPM detection tool!</p>
+    <h1>RPM Detection App</h1>
+    <p>Click the button to start detecting the BPM and RPM from music!</p>
+    <button id="startButton">Start Listening</button>
+
+    <h2>BPM: <span id="bpmDisplay">--</span></h2>
+    <h2>RPM: <span id="rpmDisplay">--</span></h2>
+
+    <script>
+        // JavaScript for future BPM detection will go here
+        document.getElementById('startButton').addEventListener('click', function() {
+            alert('Listening will start here!');
+        });
+    </script>
 </body>
 </html>
