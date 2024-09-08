@@ -1,73 +1,35 @@
-<script>
-    window.onload = function() {
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RPM Detection</title>
+</head>
+<body>
+    <h1>RPM Detection App</h1>
+    <p>Click the button to start detecting the BPM and RPM from music!</p>
+    <button id="startButton">Start Listening</button>
+
+    <h2>BPM: <span id="bpmDisplay">--</span></h2>
+    <h2>RPM: <span id="rpmDisplay">--</span></h2>
+
+    <!-- Move the script block here, at the end of the body -->
+    <script>
+        const startButton = document.getElementById('startButton');
         const bpmDisplay = document.getElementById('bpmDisplay');
         const rpmDisplay = document.getElementById('rpmDisplay');
-        const startButton = document.getElementById('startButton');
-        let audioContext, analyser, dataArray;
-
-        // Variables to detect beats
-        let previousTime = 0;
-        let beatTimestamps = [];
 
         startButton.addEventListener('click', function() {
-            // Request access to the microphone
             navigator.mediaDevices.getUserMedia({ audio: true })
                 .then(stream => {
-                    // Create an audio context
-                    audioContext = new (window.AudioContext || window.webkitAudioContext)();
-                    const source = audioContext.createMediaStreamSource(stream);
-                    analyser = audioContext.createAnalyser();
-
-                    // Set up analyser properties
-                    analyser.fftSize = 2048;
-                    const bufferLength = analyser.frequencyBinCount;
-                    dataArray = new Uint8Array(bufferLength);
-
-                    // Connect the audio input stream to the analyser
-                    source.connect(analyser);
-
-                    // Feedback to user
+                    alert('Microphone access granted! Listening for beats...');
                     startButton.textContent = "Listening...";
-                    
-                    // Start analyzing the audio stream
-                    analyzeAudio();
                 })
                 .catch(err => {
-                    console.error('Error accessing microphone: ', err);
-                    alert('Microphone access denied. Please allow access to continue.');
+                    console.error('Error accessing microphone:', err);
+                    alert('Microphone access denied.');
                 });
         });
-
-        function analyzeAudio() {
-            try {
-                requestAnimationFrame(analyzeAudio);
-                analyser.getByteTimeDomainData(dataArray);
-
-                // Simple beat detection by checking amplitude peaks
-                let currentTime = audioContext.currentTime;
-                let amplitude = Math.max(...dataArray);  // Get the maximum amplitude in the current frame
-
-                if (amplitude > 128) {  // Simple threshold to detect a "beat"
-                    if (currentTime - previousTime > 0.3) {  // Prevent detecting too many beats in a short time
-                        beatTimestamps.push(currentTime);
-                        previousTime = currentTime;
-                    }
-
-                    // Calculate BPM based on the time between beats
-                    if (beatTimestamps.length > 1) {
-                        const beatIntervals = beatTimestamps.slice(-5).map((t, i, arr) => t - (arr[i - 1] || t));
-                        const avgInterval = beatIntervals.reduce((sum, val) => sum + val, 0) / beatIntervals.length;
-                        const bpm = 60 / avgInterval;
-                        const rpm = bpm / 2;
-
-                        bpmDisplay.textContent = Math.round(bpm);
-                        rpmDisplay.textContent = rpm.toFixed(1);
-                    }
-                }
-            } catch (error) {
-                console.error('Error during audio analysis:', error);
-                alert('An error occurred during audio processing. Please try again.');
-            }
-        }
-    }
-</script>
+    </script>
+</body>
+</html>
