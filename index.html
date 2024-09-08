@@ -20,7 +20,7 @@
         const bpmDisplay = document.getElementById('bpmDisplay');
         const rpmDisplay = document.getElementById('rpmDisplay');
         let audioContext, analyser, dataArray, previousTime = 0, beatTimestamps = [], smoothedAmplitude = 0;
-        let threshold = 0;  // Adaptive threshold for beat detection
+        let threshold = 150;  // Simplified fixed threshold for beat detection
 
         startButton.addEventListener('click', function() {
             navigator.mediaDevices.getUserMedia({ audio: true })
@@ -48,12 +48,9 @@
             // Calculate amplitude and smooth it
             let amplitude = Math.max(...dataArray);
             smoothedAmplitude = smoothedAmplitude * 0.9 + amplitude * 0.1;  // Smoothing the signal
-            audioLevelDisplay.textContent = smoothedAmplitude;
+            audioLevelDisplay.textContent = Math.round(smoothedAmplitude);  // Round the audio level for display
 
-            // Adapt threshold dynamically based on the average amplitude
-            threshold = smoothedAmplitude * 1.2;
-
-            // Beat detection based on adaptive threshold
+            // Beat detection based on fixed threshold
             let currentTime = audioContext.currentTime;
             if (smoothedAmplitude > threshold) {  // Beat detected when amplitude exceeds threshold
                 if (currentTime - previousTime > 0.3) {  // Prevent detecting too many beats close together
