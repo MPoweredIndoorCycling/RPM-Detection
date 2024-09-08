@@ -11,30 +11,26 @@
     <button id="startButton">Start Listening</button>
 
     <h2>Audio Level: <span id="audioLevel">--</span></h2>
+    <h2>BPM: <span id="bpmDisplay">--</span></h2>
+    <h2>RPM: <span id="rpmDisplay">--</span></h2>
 
-    <!-- Script at the end of body -->
     <script>
         const startButton = document.getElementById('startButton');
         const audioLevelDisplay = document.getElementById('audioLevel');
-        let audioContext, analyser, dataArray;
+        const bpmDisplay = document.getElementById('bpmDisplay');
+        const rpmDisplay = document.getElementById('rpmDisplay');
+        let audioContext, analyser, dataArray, previousTime = 0, beatTimestamps = [];
 
         startButton.addEventListener('click', function() {
             navigator.mediaDevices.getUserMedia({ audio: true })
                 .then(stream => {
-                    // Create audio context and analyser
                     audioContext = new (window.AudioContext || window.webkitAudioContext)();
                     const source = audioContext.createMediaStreamSource(stream);
                     analyser = audioContext.createAnalyser();
-
-                    // Set analyser properties
                     analyser.fftSize = 2048;
                     const bufferLength = analyser.frequencyBinCount;
                     dataArray = new Uint8Array(bufferLength);
-
-                    // Connect source to analyser
                     source.connect(analyser);
-
-                    // Start analyzing the audio stream
                     visualizeAudio();
                     startButton.textContent = "Listening...";
                 })
@@ -48,9 +44,29 @@
             requestAnimationFrame(visualizeAudio);
             analyser.getByteTimeDomainData(dataArray);
 
-            // Calculate the amplitude of the audio signal
+            // Calculate amplitude
             let amplitude = Math.max(...dataArray);
             audioLevelDisplay.textContent = amplitude;
+
+            // Beat detection based on amplitude threshold
+            let currentTime = audioContext.currentTime;
+            if (amplitude > 200) {  // Threshold for detecting a beat
+                if (currentTime - previousTime > 0.3) {  // Avoid detecting too many beats close together
+                    beatTimestamps.push(currentTime);
+                    previousTime = currentTime;
+                }
+
+                // Calculate BPM based on time between beats
+                if (beatTimestamps.length > 1) {
+                    const intervals = beatTimestamps.slice(-5).map((t, i, arr) => t - (arr[i - 1] || t));
+                    const avgInterval = intervals.reduce((sum, val) => sum + val, 0) / intervals.length;
+                    const bpm = 60 / avgInterval;
+                    const rpm = bpm / 2;
+
+                    bpmDisplay.textContent = Math.round(bpm);
+                    rpmDisplay.textContent = rpm.toFixed(1);
+                }
+            }
         }
     </script>
 </body>
